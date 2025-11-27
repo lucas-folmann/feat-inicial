@@ -5,7 +5,7 @@
     "serviceType": "OData URL",
     "metadataFilename": "",
     "serviceUrl": "https://ds4devapp.sap.grupoboticario.digital/sap/opu/odata/sap/Z_UI_NBS_MAT_O2",
-    "appName": "materialnbs",
+    "appName": "materialnbsv2",
     "appTitle": "App Fiori Material x NBS",
     "appDescription": "An App Fiori Material x NBS",
     "appNamespace": "br.com.grupoboticario.sd",

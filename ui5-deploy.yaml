@@ -1,6 +1,6 @@
 specVersion: '2.5'
 metadata:
-  name: br.com.grupoboticario.sd.materialnbs
+  name: br.com.grupoboticario.sd.materialnbsv2
 type: application
 resources:
   configuration:
@@ -19,6 +19,6 @@ builder:
     - name: ui5-task-zipper
       afterTask: generateCachebusterInfo
       configuration:
-        archiveName: materialnbs
+        archiveName: materialnbsv2
         additionalFiles:
           - xs-app.json

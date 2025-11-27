@@ -8,7 +8,7 @@
 |**Template Used**<br>List Report Page V2|
 |**Service Type**<br>OData URL|
 |**Service URL**<br>https://ds4devapp.sap.grupoboticario.digital/sap/opu/odata/sap/Z_UI_NBS_MAT_O2|
-|**Module Name**<br>materialnbs|
+|**Module Name**<br>materialnbsv2|
 |**Application Title**<br>App Fiori Material x NBS|
 |**Namespace**<br>br.com.grupoboticario.sd|
 |**UI5 Theme**<br>sap_fiori_3|

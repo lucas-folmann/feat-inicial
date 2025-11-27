@@ -1,7 +1,7 @@
 {
   "_version": "1.28.0",
   "sap.app": {
-    "id": "br.com.grupoboticario.sd.materialnbs",
+    "id": "br.com.grupoboticario.sd.materialnbsv2",
     "type": "application",
     "i18n": "i18n/i18n.properties",
     "applicationVersion": {
@@ -45,10 +45,10 @@
     },
     "crossNavigation": {
       "inbounds": {
-        "MaterialNBS-display": {
-          "semanticObject": "MaterialNBS",
+        "MaterialNBSv2-display": {
+          "semanticObject": "MaterialNBSv2",
           "action": "display",
-          "title": "{{MaterialNBS-display.flpTitle}}",
+          "title": "{{MaterialNBSv2-display.flpTitle}}",
           "signature": {
             "parameters": {},
             "additionalParameters": "allowed"
@@ -95,7 +95,7 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "br.com.grupoboticario.sd.materialnbs.i18n.i18n"
+          "bundleName": "br.com.grupoboticario.sd.materialnbsv2.i18n.i18n"
         }
       },
       "": {
@@ -170,6 +170,6 @@
   },
   "sap.cloud": {
     "public": true,
-    "service": "materialnbs_service"
+    "service": "materialnbsv2_service"
   }
 }
