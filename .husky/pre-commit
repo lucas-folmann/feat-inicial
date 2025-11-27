@@ -1,0 +1,4 @@
+# @scf-option {"ignore": true}
+
+npm run update-readme
+git add .

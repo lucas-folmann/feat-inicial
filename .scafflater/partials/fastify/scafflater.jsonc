@@ -1,0 +1,8 @@
+{
+  "partial": {
+    "name": "fastify",
+    "description": "Create a Typescript API using Fastify",
+    "config": {},
+    "parameters": []
+  }
+}

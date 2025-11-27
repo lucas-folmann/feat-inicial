@@ -1,0 +1,158 @@
+# @scf-option {"ignore": true}
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+name: Standard
+
+env:
+  app-name: alquimia-template-typescript-k8s
+
+jobs:
+  ci:
+    name: CI - Build and Test
+    runs-on: [ch-tech-iac]
+    if: ${{ github.run_number != '1' }}
+    strategy:
+      matrix:
+        partial:
+          - fastify
+          - nestjs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://npm.pkg.github.com/
+          scope: '@grupoboticario'
+      - name: Install Dependencies for hooks
+        run: npm ci
+        working-directory: .scafflater/hooks
+      - name: Test hooks
+        run: npm run test
+        working-directory: .scafflater/hooks
+      - name: Create Build Folder '${{ matrix.partial }}'
+        env:
+          PARTIAL: ${{ matrix.partial }}
+        run: mkdir build-${PARTIAL}
+      - name: Install Scafflater CLI
+        run: npm i -g @grupoboticario/scafflater-cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GHA_PACKAGES }}
+      - name: Scafflater CLI - init
+        run: scafflater-cli init -p domain:project -p system:project -p component:project -p componentDescription:project -p team:project -p environmentSet.spec.ci.spec.aws.region:us-east-1 -s localFolder $(dirname `pwd`)
+        working-directory: ./build-${{ matrix.partial }}
+      - name: Scafflater CLI - partial:run - ${{ matrix.partial }}
+        env:
+          PARTIAL: ${{ matrix.partial }}
+        run: scafflater-cli partial:run ${PARTIAL}
+        working-directory: ./build-${{ matrix.partial }}
+      - name: Scafflater CLI - partial:run - services
+        run: |
+          echo "::group::Scafflater CLI - partial:runs"
+          _partials=$(scafflater-cli partial:list | awk 'NR>5 {print $1}')
+          for partial in $_partials; do
+            if [ $partial != 'fastify' ] && [ $partial != 'nestjs' ] && [ $partial != 'update-lock-file' ] ; then
+              echo "::group::Running partial:run $partial"
+              scafflater-cli partial:run $partial
+              echo "::endgroup::"
+            fi
+          done
+          echo "::endgroup::"
+        working-directory: ./build-${{ matrix.partial }}
+      - name: Scafflater CLI - partial:run - update-lock-file
+        run: scafflater-cli partial:run update-lock-file
+        working-directory: ./build-${{ matrix.partial }}
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          cache: npm
+          cache-dependency-path: ./build-${{ matrix.partial }}/package-lock.json
+          node-version-file: .nvmrc
+          registry-url: https://npm.pkg.github.com/
+          scope: '@grupoboticario'
+      - name: Install Dependencies
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GHA_PACKAGES }}
+        working-directory: ./build-${{ matrix.partial }}
+      - name: Lint
+        run: npm run lint
+        working-directory: ./build-${{ matrix.partial }}
+      - name: Test
+        run: npm run test
+        working-directory: ./build-${{ matrix.partial }}
+      - name: Sonar Analysis - ${{ matrix.partial }}
+        uses: grupoboticario/actions-ci-sonarcloud@v1
+        if: ${{ vars.SONAR_ENABLED == 'true' && github.repository_owner == 'grupoboticario' }}
+        with:
+          projectBaseDir: 'build-${{ matrix.partial }}'
+          args: >
+            "-Dsonar.organization=gboticario"
+            "-Dsonar.projectKey=${{ env.app-name }}-${{ matrix.partial }}"
+            "-Dsonar.projectName=${{ env.app-name }}-${{ matrix.partial }}"
+            "-Dsonar.language=ts"
+            "-Dsonar.sources=src"
+            "-Dsonar.sonar.sourceEncoding=UTF-8"
+            "-Dsonar.test.inclusions=**/*.test.ts"
+            "-Dsonar.exclusions=jest.config.js,package.json.hbs,scafflater.json,ts-config.json"
+            "-Dsonar.coverage.exclusions=**/*.tests.ts"
+            "-Dsonar.javascript.lcov.reportPaths=coverage/lcov.info"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+      - name: Docker Build and Push
+        uses: grupoboticario/actions-ci-alquimia@v2
+        with:
+          build-platform: linux/arm64
+          docker-context: './build-${{ matrix.partial }}'
+          docker-push: false
+          docker-secrets: |
+            NODE_AUTH_TOKEN=${{ secrets.GHA_PACKAGES }}
+          dockerfile-path: './build-${{ matrix.partial }}/dockerfiles/Dockerfile'
+  ci_dependabot_automerge:
+    name: CI - Dependabot Automerge
+    if: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' }}
+    runs-on: [ch-tech-iac-arm64]
+    needs: [ci]
+    env:
+      GH_GB_TOKEN: ${{ secrets.DEPENDABOT_AUTO_MERGE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Dependabot
+        id: dependabot
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ env.GH_GB_TOKEN }}
+      - name: Auto Merge Condition
+        id: auto-merge
+        if: |
+          (
+            steps.dependabot.outputs.update-type == 'version-update:semver-patch'
+          ) || (
+            steps.dependabot.outputs.update-type == 'version-update:semver-minor'
+          )
+        run: echo "::notice ::auto-merge conditions satisfied"
+      - name: Approve PR
+        if: ${{ steps.auto-merge.conclusion == 'success' }}
+        run: gh pr review ${{ github.event.number }} --approve
+        env:
+          GH_TOKEN: ${{ env.GH_GB_TOKEN }}
+      - name: Comment PR LGTM
+        if: ${{ steps.auto-merge.conclusion == 'success' }}
+        run: gh pr comment ${{ github.event.number }} --body "LGTM"
+        env:
+          GH_TOKEN: ${{ env.GH_GB_TOKEN }}
+      - name: PR Merge
+        if: ${{ steps.auto-merge.conclusion == 'success' }}
+        run: gh pr merge ${{ github.event.number }} --squash
+        env:
+          GH_TOKEN: ${{ env.GH_GB_TOKEN }}

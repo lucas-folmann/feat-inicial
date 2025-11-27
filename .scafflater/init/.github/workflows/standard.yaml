@@ -1,0 +1,95 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+name: Standard
+
+{{#if parameters.hasSql}}
+env:
+  database-name: {{parameters.rdsDatabaseName}}
+  instance-name: {{parameters.rdsInstanceName}}
+{{/if}}
+
+jobs:
+  ci:
+    name: CI - Build and Test
+    runs-on: [{{parameters.archInfo.runnerLabel}}]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          registry-url: https://npm.pkg.github.com/
+      - name: Install Dependencies
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: $\{{ secrets.GHA_PACKAGES }}
+      - name: Lint App
+        run: npm run lint
+      - name: Test App
+        run: npm run test
+      - name: Build App
+        run: npm run build
+      - name: Sonar Analysis
+        uses: grupoboticario/actions-ci-sonarcloud@v1
+        if: $\{{ vars.SONAR_ENABLED == 'true' }}
+        env:
+          GITHUB_TOKEN: $\{{ secrets.GHA_PACKAGES }}
+          SONAR_TOKEN: $\{{ secrets.SONARCLOUD_TOKEN }}
+  ci_docker:
+    name: CI - Docker
+    runs-on: [{{parameters.archInfo.runnerLabel}}]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Docker Build and Push
+        uses: grupoboticario/actions-ci-alquimia@v2
+        with:
+          build-platform: {{parameters.archInfo.buildPlatform}}
+          docker-secrets: |
+            NODE_AUTH_TOKEN=$\{{ secrets.GHA_PACKAGES }}
+          dockerfile-path: dockerfiles/Dockerfile
+{{#each parameters.environmentSet.spec.environments}}
+  cd_{{stage}}:
+    name: CD - {{stage}}
+    if: {{ parameters.if }}
+    needs: [{{parameters.needs}}]
+    runs-on: [{{../parameters.archInfo.runnerLabel}}]
+    environment:
+      name: {{stage}}
+      url: $\{{ steps.actions-cd-app.outputs.environment-url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Deploy Infra
+        uses: grupoboticario/actions-cd-alquimia@v2
+        id: actions-cd-infra
+        with:
+          environment: {{name}}
+          type: infra
+        {{#if ../parameters.hasSql}}
+      - name: Apply DB Migrations
+        uses: grupoboticario/actions-cd-db-migration@v2
+        with:
+          db-name: $\{{ env.database-name }}
+          instance-name: $\{{ env.instance-name }}
+          environment: {{name}}
+          language: node
+          node-auth-token: $\{{ secrets.GHA_PACKAGES }}
+          package-manager: npm
+        {{/if}}
+      - name: Deploy App
+        uses: grupoboticario/actions-cd-alquimia@v2
+        id: actions-cd-app
+        with:
+          environment: {{name}}
+          type: app
+{{/each}}

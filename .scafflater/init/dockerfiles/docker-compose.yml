@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  {{parameters.component}}:
+    container_name: {{parameters.component}}
+    build:
+      context: ../
+      dockerfile: dockerfiles/Dockerfile
+    ports:
+      - "8080:3000"
+    environment:
+      AWS_ACCESS_KEY_ID: xxxxx
+      AWS_SECRET_ACCESS_KEY: xxxxx
+

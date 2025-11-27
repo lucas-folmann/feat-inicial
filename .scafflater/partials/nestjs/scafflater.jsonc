@@ -1,0 +1,19 @@
+{
+  "partial": {
+    "name": "nestjs",
+    "description": "Create a Typescript API using NestJS",
+    "config": {},
+    "parameters": [
+      {
+        "type": "input",
+        "name": "component",
+        "message": "Component's Name"
+      },
+      {
+        "type": "input",
+        "name": "componentDescription",
+        "message": "Component's Description"
+      }
+    ]
+  }
+}

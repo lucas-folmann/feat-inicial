@@ -1,0 +1,83 @@
+{
+  "template": {
+    "name": "alquimia-template-typescript-k8s",
+    "description": "Create a new backend Typescript application",
+    "version": "1.0.0",
+    "options": {
+      "ignore": [
+        "/mkdocs.yml",
+        "/docs"
+      ]
+    },
+    "parameters": [
+      {
+        "type": "input",
+        "name": "domain",
+        "message": "VS/Chapter",
+        "regex": "[a-z0-9-]+",
+        "scope": "global"
+      },
+      {
+        "type": "input",
+        "name": "system",
+        "message": "Project or Product",
+        "regex": "[a-z0-9-]+",
+        "scope": "global"
+      },
+      {
+        "type": "input",
+        "name": "component",
+        "message": "Component Name",
+        "regex": "[a-z0-9-]+",
+        "scope": "global"
+      },
+      {
+        "type": "input",
+        "name": "componentDescription",
+        "message": "Component Description",
+        "scope": "global"
+      },
+      {
+        "type": "input",
+        "name": "team",
+        "message": "Github Team",
+        "regex": "[a-z0-9-]+",
+        "scope": "global"
+      }
+    ]
+  },
+  "templates": [
+    {
+      "name": "scafflater-template",
+      "version": "0.0.1",
+      "source": {
+        "name": "github",
+        "key": "https://github.com/grupoboticario/scafflater-template",
+        "options": {
+          "baseUrl": "https://github.com",
+          "baseUrlApi": "https://api.github.com"
+        }
+      },
+      "partials": [
+        {
+          "name": "add-partial",
+          "parameters": {
+            "name": "fastify",
+            "description": "Create a Typescript API using Fastify"
+          }
+        },
+        {
+          "name": "add-partial",
+          "parameters": {
+            "name": "nestjs",
+            "description": "Create a Typescript API using NestJS"
+          }
+        }
+      ],
+      "parameters": {
+        "name": "alquimia-template-typescript-k8s",
+        "description": "Creates a new backend Typescript application"
+      }
+    }
+  ]
+}
