@@ -1,5 +1,0 @@
-# @scf-option { "appenders": ["./appenders/yaml-appender"], "arrayAppendStrategy": "name", "targetName": "glob<.platform/*/app.yaml>" }
-
-app:
-  annotations:
-    instrumentation.opentelemetry.io/inject-nodejs: 'gb-otel/otel-instrumentation'

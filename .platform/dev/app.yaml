@@ -1,0 +1,29 @@
+app:
+  annotations:
+    instrumentation.opentelemetry.io/inject-nodejs: 'gb-otel/otel-instrumentation'
+  version: 1
+  secretStore:
+    enabled: true
+    keys:
+      - secretName: global-secret-newrelic-license-key
+        envName: NEW_RELIC_LICENSE_KEY
+  service:
+    enabled: true
+  replicas: 1
+  port: 3000
+  resources:
+    cpu: 80m
+    memory: 80Mi
+  probe:
+    path: /healthcheck
+    port: http
+    initialDelaySeconds: 15
+    timeoutSeconds: 3
+    periodSeconds: 15
+  env:
+    - name: OTEL_SERVICE_NAME
+      value: sd-material-nbs-v2-app
+    - name: LOG_LEVEL_ENABLED
+      value: 'ERROR'
+  nodeSelector:
+    kubernetes.io/arch: amd64

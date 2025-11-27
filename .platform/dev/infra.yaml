@@ -1,0 +1,6 @@
+# Por favor, não exclua este arquivo, ele é essencial para a execução da pipeline mesmo se estiver sem nós abaixo de infra:
+
+infra:
+  aws:
+    version: 1
+    enabled: true

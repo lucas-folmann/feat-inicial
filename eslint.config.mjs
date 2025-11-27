@@ -21,7 +21,7 @@ export default [
       'build',
       'coverage',
       '**/*.config.{js,ts}',
-      'tsconfig.json',
+      'tsconfig.json'
       // @scf-region eslint-ignore
       // @end-scf-region
     ]

@@ -1,68 +1,39 @@
-# Alquimia Template Typescript Kubernetes
+# Sd Material Nbs V2 App
 
-Create a new k8s backend with Typescript
+Mapeamento Material x NBS (Reforma tributária)
 
-- [Initialize Template](#initialize-template)
-- [Partials](#partials)
+## Environments
 
-## Initialize Template
+| Environment | URL                                                                |
+| ----------- | ------------------------------------------------------------------ |
+| dev         | <https://sd-material-nbs-v2-app.dev.btp.app.grupoboticario.com.br> |
+| prd         | <https://sd-material-nbs-v2-app.prd.btp.app.grupoboticario.com.br> |
 
-```bash
-npm install -g @grupoboticario/scafflater-cli
-scafflater-cli init git@github.com:grupoboticario/alquimia-template-typescript-k8s
-```
+## Guia de referência de API RESTful
 
-## Partials
+Este é o guia de API RESTful do Grupo Boticário que define os padrões a serem adotados durante a implementação de novas APIs públicas ou privadas no GB, tornando os serviços acessíveis através de interfaces que são facilmente compreendidas e documentadas para desenvolvedores e consumidores.
 
-<!-- @scf-region partials-menu -->
+[Clique aqui para acessar o guia](https://alquimia.gb.tech/docs/default/component/api-restful)
 
-[Framework Partials](#frameworks):
+## Começando
 
-- Fastify
-- Nestjs
+Executando o aplicativo:
 
-[Services Partials](#services):
-
-- DocumentDB
-- DynamoDB
-- MySql
-- S3
-- Sequelize
-- SNS
-- SQS
-
-<!-- @end-scf-region -->
-
-<!-- @scf-region partials -->
-
-## Frameworks
+Copie o arquivo env para desenvolvimento local
 
 ```bash
-USAGE
-  $ scafflater-cli partial:run fastify|nestjs
-OPTIONS
-  -o, --output=output          [default: ./] The output folder
-  -p, --parameters=parameters  [default: ] The parameters to init template
-
-DESCRIPTION
-  Creates a new Application layer using Fastify or NestJs in Typescript
+cp .env{.example,}
 ```
-
-## Services
 
 ```bash
-USAGE
-  $ scafflater-cli partial:run documentdb|dynamodb|memcached|redis|s3|sequelize|sns|sqs
-OPTIONS
-  -o, --output=output          [default: ./] The output folder
-  -p, --parameters=parameters  [default: ] The parameters to init template
-
-DESCRIPTION
-  Creates a new specified service layer
+npm ci
+npm run start:dev
 ```
 
-<!-- @end-scf-region -->
+Testando
 
----
-
-> This template was generate using [Scafflater](https://github.com/scafflater/scafflater)
+```bash
+curl http://localhost:3000/healthcheck
+curl http://localhost:3000/healthcheck/complete
+curl http://localhost:3000
+```
