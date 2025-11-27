@@ -1,99 +1,327 @@
 on:
   push:
     branches:
-      - main
+      - '**'
+    paths-ignore:
+      - '**/*.md'
+      - '.scafflater/**'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - '.scafflater/**'
   workflow_dispatch:
 
 name: Standard
 
+permissions: write-all
+
+env:
+  namespace: s4hana-fiori
+
+  #Config Deploy Fiori
+  app_name: sd-material-nbs-v2-app
+  app_name_back:
+  app_cloud_service: materialnbsv2_service
+
+  # Config Deploy Pipeline
+  aws_region: us-east-1
+  aws_role: arn:aws:iam::837663801964:role/github_actions-ecr_access
+  sm_aws_role: arn:aws:iam::837663801964:role/github_actions-secrets_access
+
 jobs:
   ci:
-    name: CI - Build and Test
-    runs-on: [vs-sap]
+    name: CI
+    runs-on: [self-hosted, vs-demanda-abastecimento]
+    environment: ci
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name == 'pull_request_target' }}
         with:
-          node-version-file: .nvmrc
-          cache: npm
-          registry-url: https://npm.pkg.github.com/
-      - name: Install Dependencies
-        run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GHA_PACKAGES }}
-      - name: Lint App
-        run: npm run lint
-      - name: Test App
-        run: npm run test
-      - name: Build App
-        run: npm run build
-      - name: Sonar Analysis
-        uses: grupoboticario/actions-ci-sonarcloud@v1
-        if: ${{ vars.SONAR_ENABLED == 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHA_PACKAGES }}
-          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
-  ci_docker:
-    name: CI - Docker
-    runs-on: [vs-sap]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Docker Build and Push
-        uses: grupoboticario/actions-ci-alquimia@v2
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name != 'pull_request_target' }}
+
+      - name: Add npm bin to PATH
+        run: |
+          echo "${{ github.workspace }}/node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
         with:
-          build-platform: linux/amd64
-          docker-secrets: |
-            NODE_AUTH_TOKEN=${{ secrets.GHA_PACKAGES }}
-          dockerfile-path: dockerfiles/Dockerfile
+          platforms: linux/amd64
+
+      - name: Configure AWS Credentials
+        if: github.event_name != 'pull_request_target'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.aws_role }}
+          aws-region: us-east-1
+
+      - name: Create ECR repository
+        if: github.event_name != 'pull_request_target'
+        continue-on-error: true
+        run: >
+          aws ecr create-repository --repository-name ${{ env.app_name }} 
+          --image-scanning-configuration scanOnPush=true || 
+          echo 'ECR repository already exists'
+
+      - name: Set ECR policy
+        if: github.event_name != 'pull_request_target'
+        continue-on-error: true
+        run: >
+          aws ecr set-repository-policy --repository-name ${{ env.app_name }}  
+          --policy-text $(cat policy.txt) 
+          || echo 'Policy already set'
+
+      - name: Login to Amazon ECR
+        if: github.event_name != 'pull_request_target'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and export
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          load: true
+          tags: name/app:latest
+
+      - name: Build and push
+        if: github.event_name != 'pull_request_target'
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.app_name }}:ci-v${{ github.run_number }}
+
   cd_dev:
-    name: CD - dev
-    if: ${{ success() && github.event_name != 'pull_request' && github.actor != 'dependabot[bot]' }}
-    needs: [ci, ci_docker]
-    runs-on: [vs-sap]
-    environment:
-      name: dev
-      url: ${{ steps.actions-cd-app.outputs.environment-url }}
+    name: CD - DEV - KYMA
+    if: ${{ success() && github.event_name != 'pull_request_target' }}
+    needs: ci
+    runs-on: [self-hosted, vs-demanda-abastecimento]
+    environment: dev
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Deploy Infra
-        uses: grupoboticario/actions-cd-alquimia@v2
-        id: actions-cd-infra
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name == 'pull_request_target' }}
         with:
-          environment: aws-btp-dev
-          type: infra
-      - name: Deploy App
-        uses: grupoboticario/actions-cd-alquimia@v2
-        id: actions-cd-app
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name != 'pull_request_target' }}
+
+      - name: Kubectl tool installer
+        uses: Azure/setup-kubectl@v2.1
         with:
-          environment: aws-btp-dev
-          type: app
+          version: 'v1.21.0'
+
+      - uses: azure/setup-helm@v2.1
+        if: hashFiles('helm/values.yaml') != ''
+        with:
+          version: 'v3.8.2'
+
+      - name: Configure AWS Credentials
+        if: github.event_name != 'pull_request_target'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.sm_aws_role }}
+          aws-region: us-east-1
+
+      - name: Read secrets from AWS Secrets Manager into environment variables
+        uses: bitovi/github-actions-aws-secrets-manager@v2.0.0
+        with:
+          secrets: |
+            KUBECONFIG_DEV
+          parse-json: false
+
+      - uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ env.KUBECONFIG_DEV }}
+
+      - name: Remove K8SCONFIG
+        run: |
+          kubectl cluster-info
+          echo 'K8SCONFIG=' >> $GITHUB_ENV
+
+      # Prepare deployments
+      - name: Render Auth YAML
+        uses: nowactions/envsubst@v1
+        with:
+          input: ./deployment/serviceInstances/authentication.yaml.tpl
+          output: ./deployment/authentication.yaml
+        env:
+          NAME_APP: ${{ env.app_name }}
+          NAMESPACE: ${{ env.namespace }}
+
+      - name: Render Deployment YAML
+        uses: nowactions/envsubst@v1
+        with:
+          input: ./deployment/deployment.yaml.tpl
+          output: ./deployment/deployment.yaml
+        env:
+          NAME_APP: ${{ env.app_name }}
+          NAME_CLOUD_SERVICE: ${{ env.app_cloud_service }}
+
+      - name: Render App Repo Host YAML
+        uses: nowactions/envsubst@v1
+        with:
+          input: ./deployment/serviceInstances/html5AppsRepoHost.yaml.tpl
+          output: ./deployment/html5AppsRepoHost.yaml
+        env:
+          NAME_APP: ${{ env.app_name }}
+
+      # If is need destination.
+      - name: Render Destination YAML
+        uses: nowactions/envsubst@v1
+        with:
+          input: ./deployment/serviceInstances/destination.yaml.tpl
+          output: ./deployment/destination.yaml
+        env:
+          NAME_APP: ${{ env.app_name }}
+
+      # Deploy destination if this required.
+      - name: Deploy Destination
+        uses: Azure/k8s-deploy@v3.1
+        with:
+          action: deploy
+          namespace: ${{ env.namespace }}
+          manifests: |
+            deployment/destination.yaml
+          strategy: none
+
+      - uses: Azure/k8s-deploy@v3.1
+        with:
+          action: deploy
+          namespace: ${{ env.namespace }}
+          manifests: |
+            deployment/authentication.yaml
+            deployment/html5AppsRepoHost.yaml
+            deployment/deployment.yaml
+          images: |
+            837663801964.dkr.ecr.us-east-1.amazonaws.com/${{ env.app_name }}:ci-v${{ github.run_number }}
+          imagepullsecrets: |
+            aws-ecr-auth
+          strategy: none
+
+      - name: App install
+        if: hashFiles('helm/values.yaml') != ''
+        run: helm upgrade -i ${{ env.app_name }} ${{ github.workspace }}/./helm -n ${{ env.app_name }}
+
   cd_prd:
-    name: CD - prd
+    name: CD - PRD - KYMA
     if: ${{ success() && github.ref == 'refs/heads/main' }}
-    needs: [cd_dev]
-    runs-on: [vs-sap]
-    environment:
-      name: prd
-      url: ${{ steps.actions-cd-app.outputs.environment-url }}
+    needs: cd_dev
+    runs-on: [self-hosted, vs-demanda-abastecimento]
+    environment: prd
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Deploy Infra
-        uses: grupoboticario/actions-cd-alquimia@v2
-        id: actions-cd-infra
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name == 'pull_request_target' }}
         with:
-          environment: aws-btp-prd
-          type: infra
-      - name: Deploy App
-        uses: grupoboticario/actions-cd-alquimia@v2
-        id: actions-cd-app
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name != 'pull_request_target' }}
+
+      - name: Kubectl tool installer
+        uses: Azure/setup-kubectl@v2.1
         with:
-          environment: aws-btp-prd
-          type: app
+          version: 'v1.21.0'
+
+      - uses: azure/setup-helm@v2.1
+        if: hashFiles('helm/values.yaml') != ''
+        with:
+          version: 'v3.8.2'
+
+      - name: Configure AWS Credentials
+        if: github.event_name != 'pull_request_target'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.sm_aws_role }}
+          aws-region: us-east-1
+
+      - name: Read secrets from AWS Secrets Manager into environment variables
+        uses: bitovi/github-actions-aws-secrets-manager@v2.0.0
+        with:
+          secrets: |
+            KUBECONFIG_PRD
+          parse-json: false
+
+      - uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ env.KUBECONFIG_PRD }}
+
+      - name: Remove K8SCONFIG
+        run: |
+          kubectl cluster-info
+          echo 'K8SCONFIG=' >> $GITHUB_ENV
+
+      # Prepare deployments
+      - name: Render Auth YAML
+        uses: nowactions/envsubst@v1
+        with:
+          input: ./deployment/serviceInstances/authentication.yaml.tpl
+          output: ./deployment/authentication.yaml
+        env:
+          NAME_APP: ${{ env.app_name }}
+          NAMESPACE: ${{ env.namespace }}
+
+      - name: Render Deployment YAML
+        uses: nowactions/envsubst@v1
+        with:
+          input: ./deployment/deployment.yaml.tpl
+          output: ./deployment/deployment.yaml
+        env:
+          NAME_APP: ${{ env.app_name }}
+          NAME_CLOUD_SERVICE: ${{ env.app_cloud_service }}
+
+      - name: Render App Repo Host YAML
+        uses: nowactions/envsubst@v1
+        with:
+          input: ./deployment/serviceInstances/html5AppsRepoHost.yaml.tpl
+          output: ./deployment/html5AppsRepoHost.yaml
+        env:
+          NAME_APP: ${{ env.app_name }}
+
+      # If is need destination.
+      - name: Render Destination YAML
+        uses: nowactions/envsubst@v1
+        with:
+          input: ./deployment/serviceInstances/destination.yaml.tpl
+          output: ./deployment/destination.yaml
+        env:
+          NAME_APP: ${{ env.app_name }}
+          NAMESPACE: ${{ env.namespace }}
+
+      # Deploy destination if this required.
+      - name: Deploy Destination
+        uses: Azure/k8s-deploy@v3.1
+        with:
+          action: deploy
+          namespace: ${{ env.namespace }}
+          manifests: |
+            deployment/destination.yaml
+          strategy: none
+
+      - uses: Azure/k8s-deploy@v3.1
+        with:
+          action: deploy
+          namespace: ${{ env.namespace }}
+          manifests: |
+            deployment/authentication.yaml
+            deployment/html5AppsRepoHost.yaml
+            deployment/deployment.yaml
+          images: |
+            837663801964.dkr.ecr.us-east-1.amazonaws.com/${{ env.app_name }}:ci-v${{ github.run_number }}
+          imagepullsecrets: |
+            aws-ecr-auth
+          strategy: none
+
+      - name: App install
+        if: hashFiles('helm/values.yaml') != ''
+        run: helm upgrade -i ${{ env.app_name }} ${{ github.workspace }}/./helm -n ${{ env.app_name }}
