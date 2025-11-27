@@ -3504,6 +3504,292 @@
             },
             "catalogInfoKind": "Component"
           }
+        },
+        {
+          "name": "techdocs:configure",
+          "parameters": {
+            "component": "sd-material-nbs-v2-app",
+            "componentDescription": "Mapeamento Material x NBS (Reforma tributária)",
+            "domain": "btp",
+            "system": "erp-cross",
+            "environment": {
+              "metadata": {
+                "namespace": "default",
+                "annotations": {
+                  "backstage.io/managed-by-location": "url:https://github.com/grupoboticario/alquimia-dev-platform/tree/main/domains/btp/environments/aws/sa-east-1/environment.prd.yaml",
+                  "backstage.io/managed-by-origin-location": "url:https://github.com/grupoboticario/alquimia-dev-platform/blob/main/domains/btp/location.yaml",
+                  "backstage.io/view-url": "https://github.com/grupoboticario/alquimia-dev-platform/tree/main/domains/btp/environments/aws/sa-east-1/environment.prd.yaml",
+                  "backstage.io/edit-url": "https://github.com/grupoboticario/alquimia-dev-platform/edit/main/domains/btp/environments/aws/sa-east-1/environment.prd.yaml",
+                  "backstage.io/source-location": "url:https://github.com/grupoboticario/alquimia-dev-platform/tree/main/domains/btp/environments/aws/sa-east-1/"
+                },
+                "name": "aws-btp-prd",
+                "description": "Environment para ambiente prd",
+                "alquimia": {
+                  "permissions": [
+                    "public"
+                  ]
+                },
+                "uid": "66438f84-317c-4f80-9b80-f2819bd94fcd",
+                "etag": "6ea741c5ccf6a001804dd454e051b7d0e51ffff3"
+              },
+              "apiVersion": "alquimia.gb.tech/v1alpha1",
+              "kind": "Environment",
+              "spec": {
+                "type": "aws",
+                "owner": "sq-devops-dea-ped",
+                "domain": "btp",
+                "crossplane": {
+                  "provider": "aws"
+                },
+                "aws": {
+                  "accountId": "940284083649",
+                  "eks": {
+                    "clusters": {
+                      "default": {
+                        "name": "kyma-c-25cfdf3-prd"
+                      }
+                    }
+                  },
+                  "ingress": {
+                    "defaultGroup": "disabled"
+                  },
+                  "region": "sa-east-1",
+                  "charts": {
+                    "app": {
+                      "name": "gb-btp-app",
+                      "revision": "0.0.12"
+                    },
+                    "app-v1": {
+                      "name": "gb-btp-app",
+                      "revision": "0.0.12"
+                    },
+                    "infra": {
+                      "name": "gb-infra",
+                      "revision": "gb-btp-infra-0.1.1"
+                    },
+                    "infra-v1": {
+                      "name": "gb-infra-v1",
+                      "revision": "1.10.0"
+                    }
+                  }
+                }
+              },
+              "relations": [
+                {
+                  "type": "canBeAccessedBy",
+                  "targetRef": "group:default/public"
+                },
+                {
+                  "type": "isFromDomain",
+                  "targetRef": "domain:default/btp"
+                },
+                {
+                  "type": "ownedBy",
+                  "targetRef": "group:default/sq-devops-dea-ped"
+                }
+              ],
+              "name": "aws-btp-prd",
+              "stage": "prd",
+              "parameters": {
+                "needs": [
+                  "cd_dev"
+                ],
+                "if": "${{ success() && github.ref == 'refs/heads/main' }}"
+              },
+              "infraDefaults": {
+                "metadata": {
+                  "namespace": "default",
+                  "annotations": {
+                    "backstage.io/managed-by-location": "url:https://github.com/grupoboticario/alquimia-dev-platform/tree/main/defaults/infra/aws/prd.yaml",
+                    "backstage.io/managed-by-origin-location": "url:https://github.com/grupoboticario/alquimia-dev-platform/blob/main/domains/playground/location.yaml",
+                    "backstage.io/view-url": "https://github.com/grupoboticario/alquimia-dev-platform/tree/main/defaults/infra/aws/prd.yaml",
+                    "backstage.io/edit-url": "https://github.com/grupoboticario/alquimia-dev-platform/edit/main/defaults/infra/aws/prd.yaml",
+                    "backstage.io/source-location": "url:https://github.com/grupoboticario/alquimia-dev-platform/tree/main/defaults/infra/aws/"
+                  },
+                  "name": "aws-prd",
+                  "description": "Configurações padrão das contas AWS em ambientes produtivos",
+                  "alquimia": {
+                    "permissions": [
+                      "public"
+                    ]
+                  },
+                  "uid": "d454357d-aea6-475e-8dfb-08dfdcfd6f8d",
+                  "etag": "3cab50b4684707736ae37d8f92d6130c40582960"
+                },
+                "apiVersion": "alquimia.gb.tech/v1alpha1",
+                "kind": "InfraDefaults",
+                "spec": {
+                  "app": {
+                    "dnsPolicy": "ClusterFirst",
+                    "image": {
+                      "pullPolicy": "IfNotPresent"
+                    },
+                    "ingress": {
+                      "scope": "private"
+                    },
+                    "service": {
+                      "protocol": "TCP",
+                      "targetPort": "http",
+                      "type": "NodePort"
+                    },
+                    "strategy": "RollingUpdate",
+                    "eventhub": {
+                      "producerBrokers": "eventhub-0-pub.grupoboticario.digital:9096,eventhub-1-pub.grupoboticario.digital:9096,eventhub-2-pub.grupoboticario.digital:9096",
+                      "consumerBrokers": "eventhub-0-sub.grupoboticario.digital:9096,eventhub-1-sub.grupoboticario.digital:9096,eventhub-2-sub.grupoboticario.digital:9096",
+                      "schemaRegistryUrl": "https://api-private.grupoboticario.com.br/global/v1/event-hub/schema-registry"
+                    }
+                  },
+                  "cache": {
+                    "dbSubnetGroupName": "crossplane-subnet-group",
+                    "logDeliveryConfiguration": {
+                      "engine": {
+                        "destinationType": "cloudwatch-logs",
+                        "logFormat": "json",
+                        "logType": "engine-log"
+                      },
+                      "slow": {
+                        "destinationType": "cloudwatch-logs",
+                        "logFormat": "json",
+                        "logType": "slow-log"
+                      }
+                    },
+                    "preferredMaintenanceWindow": "mon:02:40-mon:03:40",
+                    "snapshotWindow": "01:00-02:00"
+                  },
+                  "cloudfront": {
+                    "cachePolicyID": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+                    "httpVersion": "http2and3",
+                    "originRequestPolicyID": "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf",
+                    "priceClass": "PriceClass_200",
+                    "responseHeadersPolicyID": "eaab4381-ed33-4a86-88ca-d9558dc6cd63"
+                  },
+                  "docdb": {
+                    "dbSubnetGroupName": "crossplane-subnet-group"
+                  },
+                  "eventhub": {
+                    "kafkaBootstrapServers": "eventhub-0-sub.grupoboticario.digital:9096,eventhub-1-sub.grupoboticario.digital:9096,eventhub-2-sub.grupoboticario.digital:9096",
+                    "schemaRegistryUrl": "https://api-private.grupoboticario.digital/global/v1/event-hub/schema-registry"
+                  },
+                  "lambdaLayers": {
+                    "regions": {
+                      "eu-south-2": {
+                        "lambdaInsights": [
+                          {
+                            "type": "architecture",
+                            "architectures": {
+                              "x86_64": "arn:aws:lambda:eu-south-2:352183217350:layer:LambdaInsightsExtension:30",
+                              "arm64": "arn:aws:lambda:eu-south-2:352183217350:layer:LambdaInsightsExtension-Arm64:8"
+                            }
+                          }
+                        ],
+                        "otel": [
+                          {
+                            "type": "language",
+                            "languages": {
+                              "nodejs": "arn:aws:lambda:eu-west-3:184161586896:layer:opentelemetry-nodejs-0_12_0:1",
+                              "python": "arn:aws:lambda:eu-west-3:184161586896:layer:opentelemetry-python-0_12_0:1"
+                            }
+                          }
+                        ]
+                      },
+                      "us-east-1": {
+                        "lambdaInsights": [
+                          {
+                            "type": "architecture",
+                            "architectures": {
+                              "x86_64": "arn:aws:lambda:us-east-1:580247275435:layer:LambdaInsightsExtension:55",
+                              "arm64": "arn:aws:lambda:us-east-1:580247275435:layer:LambdaInsightsExtension-Arm64:22"
+                            }
+                          }
+                        ],
+                        "otel": [
+                          {
+                            "type": "language",
+                            "languages": {
+                              "nodejs": "arn:aws:lambda:us-east-1:184161586896:layer:opentelemetry-nodejs-0_12_0:1",
+                              "python": "arn:aws:lambda:us-east-1:184161586896:layer:opentelemetry-python-0_12_0:1"
+                            }
+                          }
+                        ]
+                      },
+                      "sa-east-1": {
+                        "lambdaInsights": [
+                          {
+                            "type": "architecture",
+                            "architectures": {
+                              "x86_64": "arn:aws:lambda:sa-east-1:580247275435:layer:LambdaInsightsExtension:54",
+                              "arm64": "arn:aws:lambda:sa-east-1:580247275435:layer:LambdaInsightsExtension-Arm64:20"
+                            }
+                          }
+                        ],
+                        "otel": [
+                          {
+                            "type": "language",
+                            "languages": {
+                              "nodejs": "arn:aws:lambda:sa-east-1:184161586896:layer:opentelemetry-nodejs-0_12_0:1",
+                              "python": "arn:aws:lambda:sa-east-1:184161586896:layer:opentelemetry-python-0_12_0:1"
+                            }
+                          }
+                        ]
+                      },
+                      "us-east-2": {
+                        "lambdaInsights": [
+                          {
+                            "type": "architecture",
+                            "architectures": {
+                              "x86_64": "arn:aws:lambda:us-east-2:580247275435:layer:LambdaInsightsExtension:55",
+                              "arm64": "arn:aws:lambda:us-east-2:580247275435:layer:LambdaInsightsExtension-Arm64:24"
+                            }
+                          }
+                        ],
+                        "otel": [
+                          {
+                            "type": "language",
+                            "languages": {
+                              "nodejs": "arn:aws:lambda:us-east-2:184161586896:layer:opentelemetry-nodejs-0_12_0:1",
+                              "python": "arn:aws:lambda:us-east-2:184161586896:layer:opentelemetry-python-0_12_0:1"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "loglevel": "error",
+                  "mq": {
+                    "deploymentMode": "CLUSTER_MULTI_AZ",
+                    "engineType": "RabbitMQ",
+                    "hostInstanceType": "mq.m5.large",
+                    "maintenanceWindowStartTime": {
+                      "dayOfWeek": "FRIDAY",
+                      "timeOfDay": "03:00"
+                    }
+                  },
+                  "rds": {
+                    "caCertificateIdentifier": "rds-ca-rsa2048-g1",
+                    "dbSubnetGroupName": "crossplane-subnet-group",
+                    "preferredBackupWindow": "04:00-06:00",
+                    "preferredMaintenanceWindow": "mon:07:00-mon:09:00",
+                    "storageType": "gp3"
+                  }
+                },
+                "relations": [
+                  {
+                    "type": "canBeAccessedBy",
+                    "targetRef": "group:default/public"
+                  }
+                ]
+              },
+              "observability": "newrelic-sap-prd"
+            },
+            "repoUrl": "https://github.com/grupoboticario/btp-erpcr-sd-material-nbs-v2-app",
+            "resources": {
+              "cpu": "80m",
+              "memory": "80Mi"
+            },
+            "probe": {},
+            "catalogInfoType": "service",
+            "catalogInfoKind": "Component"
+          }
         }
       ],
       "parameters": {

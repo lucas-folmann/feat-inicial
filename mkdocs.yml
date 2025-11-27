@@ -1,0 +1,12 @@
+site_name: "sd-material-nbs-app - Tech Docs"
+edit_uri: "https://github.com/grupoboticario/btp-erpcr-sd-material-nbs-v2-app/edit/main/docs/"
+
+nav:
+  - Home: README.md
+  - Sample Page: sample-page.md
+
+plugins:
+  - techdocs-core
+  - kroki:
+      ServerUrl: "https://alquimia-api.gb.tech/api/proxy/kroki"
+      FencePrefix: ""
