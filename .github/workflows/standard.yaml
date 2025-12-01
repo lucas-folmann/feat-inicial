@@ -132,7 +132,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Read secrets from AWS Secrets Manager into environment variables
-        uses: bitovi/github-actions-aws-secrets-manager@v2.0.0
+        uses: bitovi/github-actions-aws-secrets-manager@v2.1.0
         with:
           secrets: |
             KUBECONFIG_DEV
@@ -245,7 +245,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Read secrets from AWS Secrets Manager into environment variables
-        uses: bitovi/github-actions-aws-secrets-manager@v2.0.0
+        uses: bitovi/github-actions-aws-secrets-manager@v2.1.0
         with:
           secrets: |
             KUBECONFIG_PRD
