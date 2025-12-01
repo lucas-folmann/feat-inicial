@@ -138,7 +138,7 @@ jobs:
             KUBECONFIG_DEV
           parse-json: false
 
-      - uses: azure/k8s-set-context@v1
+      - uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
           kubeconfig: ${{ env.KUBECONFIG_DEV }}
@@ -251,7 +251,7 @@ jobs:
             KUBECONFIG_PRD
           parse-json: false
 
-      - uses: azure/k8s-set-context@v1
+      - uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
           kubeconfig: ${{ env.KUBECONFIG_PRD }}
