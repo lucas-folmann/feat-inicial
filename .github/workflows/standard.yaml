@@ -186,7 +186,7 @@ jobs:
 
       # Deploy destination if this required.
       - name: Deploy Destination
-        uses: Azure/k8s-deploy@v3.1
+        uses: Azure/k8s-deploy@v4.10
         with:
           action: deploy
           namespace: ${{ env.namespace }}
@@ -194,7 +194,7 @@ jobs:
             deployment/destination.yaml
           strategy: none
 
-      - uses: Azure/k8s-deploy@v3.1
+      - uses: Azure/k8s-deploy@v4.10
         with:
           action: deploy
           namespace: ${{ env.namespace }}
@@ -300,7 +300,7 @@ jobs:
 
       # Deploy destination if this required.
       - name: Deploy Destination
-        uses: Azure/k8s-deploy@v3.1
+        uses: Azure/k8s-deploy@v4.10
         with:
           action: deploy
           namespace: ${{ env.namespace }}
@@ -308,7 +308,7 @@ jobs:
             deployment/destination.yaml
           strategy: none
 
-      - uses: Azure/k8s-deploy@v3.1
+      - uses: Azure/k8s-deploy@v4.10
         with:
           action: deploy
           namespace: ${{ env.namespace }}
