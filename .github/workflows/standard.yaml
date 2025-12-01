@@ -115,7 +115,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request_target' }}
 
       - name: Kubectl tool installer
-        uses: Azure/setup-kubectl@v2.1
+        uses: Azure/setup-kubectl@v3.2
         with:
           version: 'v1.21.0'
 
@@ -228,7 +228,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request_target' }}
 
       - name: Kubectl tool installer
-        uses: Azure/setup-kubectl@v2.1
+        uses: Azure/setup-kubectl@v3.2
         with:
           version: 'v1.21.0'
 
