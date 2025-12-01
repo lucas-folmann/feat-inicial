@@ -55,7 +55,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: github.event_name != 'pull_request_target'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ env.aws_role }}
           aws-region: us-east-1
@@ -126,7 +126,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: github.event_name != 'pull_request_target'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ env.sm_aws_role }}
           aws-region: us-east-1
@@ -239,7 +239,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: github.event_name != 'pull_request_target'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ env.sm_aws_role }}
           aws-region: us-east-1
