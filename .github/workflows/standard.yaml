@@ -36,12 +36,12 @@ jobs:
     runs-on: [self-hosted, vs-demanda-abastecimento]
     environment: ci
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         if: ${{ github.event_name == 'pull_request_target' }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         if: ${{ github.event_name != 'pull_request_target' }}
 
       - name: Add npm bin to PATH
@@ -106,12 +106,12 @@ jobs:
     runs-on: [self-hosted, vs-demanda-abastecimento]
     environment: dev
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         if: ${{ github.event_name == 'pull_request_target' }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         if: ${{ github.event_name != 'pull_request_target' }}
 
       - name: Kubectl tool installer
@@ -219,12 +219,12 @@ jobs:
     runs-on: [self-hosted, vs-demanda-abastecimento]
     environment: prd
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         if: ${{ github.event_name == 'pull_request_target' }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         if: ${{ github.event_name != 'pull_request_target' }}
 
       - name: Kubectl tool installer
